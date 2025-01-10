@@ -9,15 +9,15 @@ Adding a model requires few steps:
 After following these steps, you can open PR.
 
 Also, it is important to check that the examples and main ggml backends (CUDA, METAL, CPU) are working with the new architecture, especially:
-- [main](../examples/main)
-- [imatrix](../examples/imatrix)
-- [quantize](../examples/quantize)
-- [server](../examples/server)
+- [main](/examples/main/)
+- [imatrix](/examples/imatrix/)
+- [quantize](/examples/quantize/)
+- [server](/examples/server/)
 
 ### 1. Convert the model to GGUF
 
 This step is done in python with a `convert` script using the [gguf](https://pypi.org/project/gguf/) library.
-Depending on the model architecture, you can use either [convert_hf_to_gguf.py](../convert_hf_to_gguf.py) or [examples/convert_legacy_llama.py](../examples/convert_legacy_llama.py) (for `llama/llama2` models in `.pth` format).
+Depending on the model architecture, you can use either [convert_hf_to_gguf.py](/convert_hf_to_gguf.py) or [examples/convert_legacy_llama.py](/examples/convert_legacy_llama.py) (for `llama/llama2` models in `.pth` format).
 
 The convert script reads the model configuration, tokenizer, tensor names+data and converts them to GGUF metadata and tensors.
 
@@ -28,10 +28,10 @@ The required steps to implement for an HF model are:
 ```python
 @Model.register("MyModelForCausalLM")
 class MyModel(Model):
-    model_arch = gguf.MODEL_ARCH.GROK
+    model_arch = gguf.MODEL_ARCH.MYMODEL
 ```
 
-2. Define the layout of the GGUF tensors in [constants.py](../gguf-py/gguf/constants.py)
+2. Define the layout of the GGUF tensors in [constants.py](/gguf-py/gguf/constants.py)
 
 Add an enum entry in `MODEL_ARCH`, the model human friendly name in `MODEL_ARCH_NAMES` and the GGUF tensor names in `MODEL_TENSORS`.
 
@@ -54,7 +54,7 @@ Example for `falcon` model:
 
 As a general rule, before adding a new tensor name to GGUF, be sure the equivalent naming does not already exist.
 
-Once you have found the GGUF tensor name equivalent, add it to the [tensor_mapping.py](../gguf-py/gguf/tensor_mapping.py) file.
+Once you have found the GGUF tensor name equivalent, add it to the [tensor_mapping.py](/gguf-py/gguf/tensor_mapping.py) file.
 
 If the tensor name is part of a repetitive layer/block, the key word `bid` substitutes it.
 
@@ -79,14 +79,14 @@ Depending on the model configuration, tokenizer, code and tensors layout, you wi
 - `Model#set_vocab`
 - `Model#write_tensors`
 
-NOTE: Tensor names must end with `.weight` suffix, that is the convention and several tools like `quantize` expect this to proceed the weights.
+NOTE: Tensor names must end with `.weight` or `.bias` suffixes, that is the convention and several tools like `quantize` expect this to proceed the weights.
 
 ### 2. Define the model architecture in `llama.cpp`
 
 The model params and tensors layout must be defined in `llama.cpp`:
 1. Define a new `llm_arch`
 2. Define the tensors layout in `LLM_TENSOR_NAMES`
-3. Add any non standard metadata in `llm_load_hparams`
+3. Add any non-standard metadata in `llm_load_hparams`
 4. Create the tensors for inference in `llm_load_tensors`
 5. If the model has a RoPE operation, add the rope type in `llama_rope_type`
 
@@ -96,11 +96,11 @@ NOTE: The dimensions in `ggml` are typically in the reverse order of the `pytorc
 
 This is the funniest part, you have to provide the inference graph implementation of the new model architecture in `llama_build_graph`.
 
-Have a look at existing implementation like `build_llama`, `build_dbrx` or `build_bert`.
+Have a look at existing implementations like `build_llama`, `build_dbrx` or `build_bert`.
 
-When implementing a new graph, please note that the underlying `ggml` backends might not support them all, support for missing backend operations can be added in another PR.
+Some `ggml` backends do not support all operations. Backend implementations can be added in a separate PR.
 
-Note: to debug the inference graph: you can use [llama-eval-callback](../examples/eval-callback).
+Note: to debug the inference graph: you can use [llama-eval-callback](/examples/eval-callback/).
 
 ## GGUF specification
 
