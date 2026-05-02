@@ -326,6 +326,51 @@ To learn more about model quantization, [read this documentation](tools/quantize
 
 #### A CLI tool for accessing and experimenting with most of `llama.cpp`'s functionality.
 
+Usage:
+
+```bash
+llama-cli [arguments]
+}
+
+#### KV Cache Quantization
+
+In addition to model weight quantization, llama.cpp supports **KV cache quantization** to reduce memory usage during inference, especially for long contexts. The KV cache stores the Key and Value tensors from previous tokens, and its size scales with both model size and context length.
+
+##### Available KV cache types
+
+| Type | Bits/elem | Description |
+|------|-----------|-------------|
+| `f16` | 16.0 | Default — half precision |
+| `f32` | 32.0 | Full precision |
+| `bf16` | 16.0 | Brain float |
+| `q8_0` | 8.0 | 8-bit quantization |
+| `q4_0` | 4.0 | 4-bit quantization |
+| `q4_1` | 4.0 | 4-bit quantization (higher precision) |
+| `q5_0` | 5.0 | 5-bit quantization |
+| `q5_1` | 5.0 | 5-bit quantization (higher precision) |
+| `iq4_nl` | 4.0 | 4-bit importance-aware quantization |
+| `tbq3_0` | 3.06 | TurboQuant 3-bit — random rotation + Lloyd-Max scalar quantization |
+| `tbq4_0` | 4.06 | TurboQuant 4-bit — random rotation + Lloyd-Max scalar quantization |
+
+**TurboQuant** (`tbq3_0`, `tbq4_0`) is a KV cache quantization method based on [TurboQuant: Online Vector Quantization with Near-optimal Distortion Rate](https://arxiv.org/abs/2504.19874) (Google Research). It applies a random orthogonal rotation to normalize input vectors, then quantizes each coordinate independently using precomputed Lloyd-Max-optimal scalar codebooks. `tbq4_0` achieves quality comparable to `q4_0` while using slightly less memory (4.06 vs 4.0 bits per element), and `tbq3_0` pushes compression further to ~3.06 bpw with graceful quality degradation.
+
+Usage:
+```bash
+# 4-bit TurboQuant KV cache (balanced quality/memory)
+llama-cli -m model.gguf --cache-type-k tbq4_0 --cache-type-v tbq4_0
+
+# 3-bit TurboQuant KV cache (maximum memory savings)  
+llama-cli -m model.gguf --cache-type-k tbq3_0 --cache-type-v tbq3_0
+
+# Different types for K and V
+llama-cli -m model.gguf --cache-type-k tbq4_0 --cache-type-v f16
+```
+
+**Notes:**
+- TurboQuant is currently CPU-only — on Apple Silicon (Metal), TBQ quantization/dequantization is handled by the CPU backend while the rest of inference runs on GPU
+- Flash attention is recommended when using KV cache quantization
+- KV cache quantization works best with long-context inference where memory savings are most significant
+
 - <details open>
     <summary>Run in conversation mode</summary>
 

@@ -112,6 +112,14 @@ void quantize_row_tq2_0(const float * GGML_RESTRICT x, void * GGML_RESTRICT vy, 
     quantize_row_tq2_0_ref(x, y, k);
 }
 
+void quantize_row_tbq3_0(const float * x, void * y, int64_t k) {
+    quantize_row_tbq3_0_ref(x, (block_tbq3_0 *)y, k);
+}
+
+void quantize_row_tbq4_0(const float * x, void * y, int64_t k) {
+    quantize_row_tbq4_0_ref(x, (block_tbq4_0 *)y, k);
+}
+
 //===================================== Q8_K ==============================================
 
 void quantize_row_q8_K_generic(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
@@ -1285,4 +1293,12 @@ void quantize_row_iq4_nl(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, 
 void quantize_row_iq4_xs(const float * GGML_RESTRICT x, void * GGML_RESTRICT y, int64_t k) {
     assert(k % QK_K == 0);
     quantize_iq4_xs(x, y, 1, k, NULL);
+}
+
+void ggml_vec_dot_tbq3_0_q8_K(int n, float * s, size_t bs, const void * vx, size_t bx, const void * vy, size_t by, int nrc) {
+    ggml_vec_dot_tbq3_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
+}
+
+void ggml_vec_dot_tbq4_0_q8_K(int n, float * s, size_t bs, const void * vx, size_t bx, const void * vy, size_t by, int nrc) {
+    ggml_vec_dot_tbq4_0_q8_K_generic(n, s, bs, vx, bx, vy, by, nrc);
 }
